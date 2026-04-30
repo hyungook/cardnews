@@ -21,8 +21,8 @@ const BASE_DIR = join(process.cwd(), env.BASE_DIR);
 /**
  * 파일명을 정규화한다.
  * - 공백을 언더스코어로 변환
- * - 파일 시스템에 안전하지 않은 특수문자 제거
- * - 한글 문자는 유지
+ * - 파일 시스템에 안전하지 않은 특수문자만 제거
+ * - 한글, 영문, 숫자는 모두 유지
  * - 파일 확장자는 보존
  * 
  * Requirements: 16.1, 16.2, 16.3, 16.4
@@ -34,10 +34,9 @@ export function normalizeFilename(filename: string): string {
   // 공백을 언더스코어로 변환
   let normalized = nameWithoutExt.replace(/\s+/g, '_');
   
-  // 파일 시스템에 안전하지 않은 특수문자 제거
-  // 허용: 알파벳, 숫자, 한글(가-힣, ㄱ-ㅎ, ㅏ-ㅣ), 언더스코어, 하이픈, 점
-  // u 플래그 추가로 유니코드 제대로 처리
-  normalized = normalized.replace(/[^a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ._-]/gu, '');
+  // 파일 시스템에 위험한 문자만 제거 (/, \, :, *, ?, ", <, >, |, null)
+  // 나머지 문자(한글, 영문, 숫자, 특수문자)는 모두 허용
+  normalized = normalized.replace(/[/\\:*?"<>|\x00]/g, '');
   
   // 연속된 언더스코어를 하나로
   normalized = normalized.replace(/_+/g, '_');
