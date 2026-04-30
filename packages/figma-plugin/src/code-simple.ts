@@ -180,7 +180,9 @@ async function handleCheckOverflow(params: any): Promise<any> {
   }
   
   const textNode = child as SceneNode;
-  const parentNode = frame as SceneNode;
+  
+  // 텍스트 노드의 직접 부모를 찾기 (더 정확한 오버플로우 검증)
+  const parentNode = textNode.parent as SceneNode;
   
   const textBox = textNode.absoluteBoundingBox;
   const parentBox = parentNode.absoluteBoundingBox;
@@ -189,8 +191,29 @@ async function handleCheckOverflow(params: any): Promise<any> {
     throw new Error('Cannot get bounding box');
   }
   
-  const overflowX = Math.max(0, (textBox.x + textBox.width) - (parentBox.x + parentBox.width));
-  const overflowY = Math.max(0, (textBox.y + textBox.height) - (parentBox.y + parentBox.height));
+  // 허용 오차: 5픽셀까지는 정상으로 간주
+  const TOLERANCE = 5;
+  
+  // 오른쪽 오버플로우
+  const overflowRight = Math.max(0, (textBox.x + textBox.width) - (parentBox.x + parentBox.width) - TOLERANCE);
+  // 왼쪽 오버플로우
+  const overflowLeft = Math.max(0, parentBox.x - textBox.x - TOLERANCE);
+  // 아래쪽 오버플로우
+  const overflowBottom = Math.max(0, (textBox.y + textBox.height) - (parentBox.y + parentBox.height) - TOLERANCE);
+  // 위쪽 오버플로우
+  const overflowTop = Math.max(0, parentBox.y - textBox.y - TOLERANCE);
+  
+  const overflowX = overflowRight + overflowLeft;
+  const overflowY = overflowBottom + overflowTop;
+  
+  console.log('[Plugin] Overflow check:', {
+    layerName: params.layerName,
+    textBox: textBox,
+    parentBox: parentBox,
+    overflowX: overflowX,
+    overflowY: overflowY,
+    isOverflowing: overflowX > 0 || overflowY > 0
+  });
   
   return {
     isOverflowing: overflowX > 0 || overflowY > 0,

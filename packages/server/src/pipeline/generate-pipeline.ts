@@ -315,7 +315,15 @@ export class GeneratePipeline extends EventEmitter {
       this.deps.orchestrator.checkOverflow(frameId, 'main_text'),
     );
     if (overflow.isOverflowing) {
-      throw new PipelineError('TEXT_OVERFLOW', '기본문구가 영역을 초과합니다. 텍스트를 줄여주세요');
+      const details = [];
+      if (overflow.overflowX > 0) {
+        details.push(`가로 ${Math.round(overflow.overflowX)}px 초과`);
+      }
+      if (overflow.overflowY > 0) {
+        details.push(`세로 ${Math.round(overflow.overflowY)}px 초과`);
+      }
+      const detailMsg = details.length > 0 ? ` (${details.join(', ')})` : '';
+      throw new PipelineError('TEXT_OVERFLOW', `기본 문구 텍스트가 오버플로우 되었습니다${detailMsg}. 텍스트를 줄여주세요`);
     }
 
     // m. Export image with quality adjustment
