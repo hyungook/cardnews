@@ -1,0 +1,21 @@
+{
+  "name": "figma-card-news-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Figma 카드뉴스 자동화 시스템",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n 서버,웹 -c blue,green \"cd packages/server && npx tsx src/index.ts\" \"cd packages/web && npx vite\"",
+    "test": "vitest --run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "fast-check": "^4.1.1",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.1"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "@card-news/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "카드뉴스 자동화 공유 타입 및 상수",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest --run"
+  }
+}

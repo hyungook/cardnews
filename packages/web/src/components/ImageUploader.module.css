@@ -1,0 +1,143 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.uploadSection {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 2px dashed #475569;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.uploadSection:hover {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f1e3a 100%);
+}
+
+.uploadSection.dragOver {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #1e3a8f 0%, #1e293b 100%);
+  transform: scale(1.02);
+}
+
+.uploadIcon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.uploadTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 8px;
+}
+
+.uploadHint {
+  font-size: 14px;
+  color: #94a3b8;
+}
+
+.fileInput {
+  display: none;
+}
+
+.folderSelect {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.folderButton {
+  padding: 10px 20px;
+  border: 2px solid #475569;
+  border-radius: 8px;
+  background: #1e293b;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.folderButton:hover {
+  border-color: #3b82f6;
+  background: #1e3a5f;
+}
+
+.folderButton.active {
+  border-color: #3b82f6;
+  background: #1e3a8f;
+  color: #fff;
+}
+
+.uploadProgress {
+  margin-top: 16px;
+  padding: 12px;
+  background: #1e293b;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.uploadSuccess {
+  color: #86efac;
+}
+
+.uploadError {
+  color: #fca5a5;
+}
+
+.fileList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.fileName {
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+.fileFolder {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.deleteButton {
+  padding: 6px 12px;
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: #b91c1c;
+}
+
+.deleteButton:disabled {
+  background: #475569;
+  cursor: not-allowed;
+}

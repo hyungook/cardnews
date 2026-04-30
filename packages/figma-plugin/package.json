@@ -1,0 +1,14 @@
+{
+  "name": "@card-news/figma-plugin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "카드뉴스 자동화 Figma 플러그인",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest --run"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.106.0",
+    "esbuild": "^0.25.0"
+  }
+}
