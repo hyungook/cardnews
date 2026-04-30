@@ -11,6 +11,7 @@ import { generateRouter } from './routes/generate.js';
 import { historyRouter } from './routes/history.js';
 import { framesRouter } from './routes/frames.js';
 import { localUploadRouter } from './routes/local-upload.js';
+import { migrateRouter } from './routes/migrate-columns.js';
 import { WebSocketBridge } from './websocket/bridge.js';
 import { ensureFolders, cleanupOldResults } from './local/local-storage.js';
 import { env, allowedOrigins } from './config/env.js';
@@ -46,6 +47,7 @@ export function createApp() {
   app.use('/api/history', historyRouter);
   app.use('/api/frames', framesRouter);
   app.use('/api/local', localUploadRouter);
+  app.use('/api/migrate', migrateRouter);
 
   return app;
 }

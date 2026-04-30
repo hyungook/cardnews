@@ -129,6 +129,47 @@ localUploadRouter.post('/upload', uploadLimiter(false), upload.single('file'), a
 });
 
 /**
+ * GET /api/local/files/:filename
+ * 파일을 직접 제공한다 (이미지 미리보기용).
+ * Query parameter: folder ('배경이미지' | '로고')
+ */
+localUploadRouter.get('/files/:filename', async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const folder = req.query.folder as string;
+
+    log.debug('파일 제공 요청', { filename, folder });
+
+    // 폴더 검증
+    if (!folder) {
+      res.status(400).send('folder 쿼리 파라미터가 필요합니다');
+      return;
+    }
+
+    validateFolder(folder);
+
+    // 파일 경로 생성
+    const { join } = await import('path');
+    const BASE_DIR = join(process.cwd(), env.BASE_DIR);
+    const filePath = join(BASE_DIR, folder, filename);
+
+    // 파일 존재 확인
+    const { existsSync } = await import('fs');
+    if (!existsSync(filePath)) {
+      log.warn('파일을 찾을 수 없음', { folder, filename });
+      res.status(404).send('파일을 찾을 수 없습니다');
+      return;
+    }
+
+    // 파일 제공
+    res.sendFile(filePath);
+  } catch (error) {
+    log.error('파일 제공 실패', error);
+    res.status(500).send('파일 제공 중 오류가 발생했습니다');
+  }
+});
+
+/**
  * GET /api/local/files
  * 배경이미지 + 로고 폴더의 파일 목록을 조회한다.
  * 
@@ -339,47 +380,6 @@ localUploadRouter.post('/rename', async (req, res) => {
 
     log.error('파일명 수정 실패', error);
     sendErrorAuto(res, ErrorCode.INTERNAL_ERROR, '파일명 수정 중 오류가 발생했습니다');
-  }
-});
-
-/**
- * GET /api/local/files/:filename
- * 파일을 직접 제공한다 (이미지 미리보기용).
- * Query parameter: folder ('배경이미지' | '로고')
- */
-localUploadRouter.get('/files/:filename', async (req, res) => {
-  try {
-    const { filename } = req.params;
-    const folder = req.query.folder as string;
-
-    log.debug('파일 제공 요청', { filename, folder });
-
-    // 폴더 검증
-    if (!folder) {
-      res.status(400).send('folder 쿼리 파라미터가 필요합니다');
-      return;
-    }
-
-    validateFolder(folder);
-
-    // 파일 경로 생성
-    const { join } = await import('path');
-    const BASE_DIR = join(process.cwd(), env.BASE_DIR);
-    const filePath = join(BASE_DIR, folder, filename);
-
-    // 파일 존재 확인
-    const { existsSync } = await import('fs');
-    if (!existsSync(filePath)) {
-      log.warn('파일을 찾을 수 없음', { folder, filename });
-      res.status(404).send('파일을 찾을 수 없습니다');
-      return;
-    }
-
-    // 파일 제공
-    res.sendFile(filePath);
-  } catch (error) {
-    log.error('파일 제공 실패', error);
-    res.status(500).send('파일 제공 중 오류가 발생했습니다');
   }
 });
 

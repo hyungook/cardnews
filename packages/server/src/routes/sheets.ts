@@ -79,7 +79,7 @@ sheetsRouter.post('/create-template', async (_req, res) => {
       range: '데이터!A1:J1',
       valueInputOption: 'RAW',
       requestBody: {
-        values: [['영화제목', '배경파일명(수동)', '로고파일명(수동)', '기본문구', '추가문구', '뱃지1', '뱃지2', '뱃지3', '뱃지4', '카피라이트']],
+        values: [['영화제목', '배경이미지', '로고', '기본문구', '추가문구', '뱃지1', '뱃지2', '뱃지3', '뱃지4', '카피라이트']],
       },
     });
 

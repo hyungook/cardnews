@@ -45,7 +45,7 @@ export interface SpreadsheetTableProps {
   onRowsSelected: (selectedRows: number[]) => void;
   selectedRows: number[];
   onPreviewRow?: (rowIndex: number) => void;
-  uploadedFiles: { filename: string; folder: string }[];
+  uploadedFiles: { name: string; folder: string }[];
   onFilesChange: () => void;
 }
 

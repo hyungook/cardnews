@@ -5,7 +5,7 @@ interface ImagePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (filename: string) => void;
-  files: { filename: string; folder: string }[];
+  files: { name: string; folder: string }[];
   folder: '배경이미지' | '로고';
   currentValue: string;
 }
@@ -81,14 +81,14 @@ export default function ImagePickerModal({
               {/* 파일 목록 */}
               {filteredFiles.map((file) => (
                 <div
-                  key={file.filename}
-                  className={`${styles.card} ${selectedFile === file.filename ? styles.selected : ''}`}
-                  onClick={() => setSelectedFile(file.filename)}
+                  key={file.name}
+                  className={`${styles.card} ${selectedFile === file.name ? styles.selected : ''}`}
+                  onClick={() => setSelectedFile(file.name)}
                 >
                   <div className={styles.imagePreview}>
                     <img
-                      src={`/api/local/files/${encodeURIComponent(file.filename)}?folder=${encodeURIComponent(file.folder)}`}
-                      alt={file.filename}
+                      src={`/api/local/files/${encodeURIComponent(file.name)}?folder=${encodeURIComponent(file.folder)}`}
+                      alt={file.name}
                       className={styles.image}
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -101,8 +101,8 @@ export default function ImagePickerModal({
                     />
                   </div>
                   <div className={styles.cardFooter}>
-                    <div className={styles.filename} title={file.filename}>
-                      {file.filename}
+                    <div className={styles.filename} title={file.name}>
+                      {file.name}
                     </div>
                   </div>
                 </div>

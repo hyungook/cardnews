@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const [completedResults, setCompletedResults] = useState<RowResult[] | null>(null);
   const [pluginConnected, setPluginConnected] = useState(true);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<{ filename: string; folder: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<{ name: string; folder: string }[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -49,7 +49,7 @@ export default function DashboardPage() {
 
   const fetchUploadedFiles = useCallback(async () => {
     try {
-      const response = await apiFetch<{ success: boolean; data: { files: { filename: string; folder: string }[] } }>('/local/files');
+      const response = await apiFetch<{ success: boolean; data: { files: { name: string; folder: string }[] } }>('/local/files');
       setUploadedFiles(response.data.files || []);
     } catch {
       setUploadedFiles([]);

@@ -2,9 +2,7 @@ import type { CardNewsRow } from '@card-news/shared';
 
 /**
  * 스프레드시트 컬럼 순서 (10열):
- * 영화제목, 배경파일명(수동), 로고파일명(수동), 기본문구, 추가문구, 뱃지1, 뱃지2, 뱃지3, 뱃지4, 카피라이트
- *
- * 배경파일명/로고파일명은 영화제목 + 패턴으로 자동 생성되며, 수동 지정 시 컬럼 B, C를 사용.
+ * 영화제목, 배경이미지, 로고, 기본문구, 추가문구, 뱃지1, 뱃지2, 뱃지3, 뱃지4, 카피라이트
  */
 
 /**
@@ -29,7 +27,7 @@ export function parseRow(cells: string[], rowIndex: number): CardNewsRow {
 
 /**
  * CardNewsRow를 셀 배열(string[])로 변환한다.
- * 컬럼 순서: 영화제목, 배경오버라이드, 로고오버라이드, 기본문구, 추가문구, 뱃지1~4, 카피라이트
+ * 컬럼 순서: 영화제목, 배경이미지, 로고, 기본문구, 추가문구, 뱃지1~4, 카피라이트
  */
 export function serializeRow(row: CardNewsRow): string[] {
   return [
