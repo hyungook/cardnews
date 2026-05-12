@@ -203,11 +203,16 @@ export default function SpreadsheetTable({
       // Update local state optimistically — parent will get fresh data on refresh
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (row as any)[editing.field] = editValue;
+      
+      // 뱃지 필드 업데이트 후 화면 갱신
+      if (BADGE_FIELDS.has(editing.field)) {
+        onRefresh();
+      }
     } catch {
       // Silently fail — user can retry or refresh
     }
     setEditing(null);
-  }, [editing, editValue, rows]);
+  }, [editing, editValue, rows, onRefresh]);
 
   const handleImageSelect = useCallback(async (filename: string) => {
     setEditValue(filename);

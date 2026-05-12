@@ -37,8 +37,8 @@ export default function BadgeAutocomplete({
       setShowModal(false);
       setSearchQuery('');
       setActiveIndex(-1);
-      // 선택 후 즉시 커밋
-      setTimeout(() => onCommit(), 0);
+      // 선택 후 상태 업데이트를 기다린 후 커밋
+      setTimeout(() => onCommit(), 50);
     },
     [onChange, onCommit],
   );
