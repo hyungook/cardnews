@@ -48,6 +48,10 @@ function base64ToUint8Array(base64: string): Uint8Array {
   return figma.base64Decode(base64);
 }
 
+// 복제된 프레임들의 위치를 추적하기 위한 전역 변수
+let lastClonedFrameX = 0;
+let lastClonedFrameWidth = 0;
+
 // Command handlers
 async function handleCloneFrame(params: any): Promise<any> {
   const node = figma.getNodeById(params.templateNodeId);
@@ -57,9 +61,24 @@ async function handleCloneFrame(params: any): Promise<any> {
   
   const clone = (node as SceneNode).clone();
   
-  if ('x' in node && 'width' in node) {
-    const original = node as SceneNode & { x: number; width: number };
-    clone.x = original.x + original.width + 50;
+  if ('x' in node && 'width' in node && 'y' in node) {
+    const original = node as SceneNode & { x: number; y: number; width: number };
+    
+    // 첫 번째 복제본인 경우
+    if (lastClonedFrameX === 0 && lastClonedFrameWidth === 0) {
+      clone.x = original.x + original.width + 100;
+      clone.y = original.y;
+    } else {
+      // 이후 복제본들은 마지막 복제본 오른쪽에 배치
+      clone.x = lastClonedFrameX + lastClonedFrameWidth + 100;
+      clone.y = original.y;
+    }
+    
+    // 현재 복제본의 위치 저장
+    lastClonedFrameX = clone.x;
+    lastClonedFrameWidth = clone.width;
+    
+    console.log('[Plugin] Frame cloned at position:', { x: clone.x, y: clone.y });
   }
   
   return { frameId: clone.id };
@@ -83,6 +102,8 @@ async function handleSetText(params: any): Promise<void> {
   }
   
   textNode.characters = params.text;
+  textNode.visible = true; // 텍스트를 설정할 때는 명시적으로 보이도록 설정
+  console.log('[Plugin] Text set:', params.layerName, '=', params.text.substring(0, 30) + (params.text.length > 30 ? '...' : ''));
 }
 
 async function handleHideLayer(params: any): Promise<void> {
@@ -93,10 +114,12 @@ async function handleHideLayer(params: any): Promise<void> {
   
   const child = findChildByName(frame as BaseNode & ChildrenMixin, params.layerName);
   if (!child) {
+    console.warn('[Plugin] Layer not found for hiding:', params.layerName);
     throw new Error('Layer not found: ' + params.layerName);
   }
   
   child.visible = false;
+  console.log('[Plugin] Layer hidden:', params.layerName);
 }
 
 async function handleReplaceImage(params: any): Promise<void> {
@@ -128,41 +151,69 @@ async function handleSwitchBadgeVariant(params: any): Promise<void> {
     throw new Error('badge_container not found');
   }
   
+  // 뱃지가 없으면 컨테이너 전체를 숨김
   if (params.count === 0) {
     badgeContainer.visible = false;
+    console.log('[Plugin] Badge container hidden (no badges)');
     return;
   }
   
   badgeContainer.visible = true;
+  console.log('[Plugin] Badge container visible, count:', params.count);
   
+  // Variant 전환 시도 (Component Instance인 경우)
   if (badgeContainer.type === 'INSTANCE') {
     const instance = badgeContainer as InstanceNode;
     try {
       instance.setProperties({ count: String(params.count) });
+      console.log('[Plugin] Badge variant set to:', params.count);
     } catch (e) {
-      console.warn('Failed to set badge variant:', e);
+      console.warn('[Plugin] Failed to set badge variant:', e);
     }
   }
   
+  // 개별 뱃지 슬롯 처리
   if ('children' in badgeContainer) {
     const container = badgeContainer as BaseNode & ChildrenMixin;
+    
+    // 먼저 모든 뱃지 슬롯을 숨김
     for (let i = 1; i <= 4; i++) {
       const badgeSlot = findChildByName(container, 'badge_' + i);
-      if (!badgeSlot) continue;
+      if (badgeSlot) {
+        badgeSlot.visible = false;
+      }
+    }
+    
+    // 필요한 뱃지만 표시하고 텍스트 설정
+    for (const badge of params.badges) {
+      const badgeSlot = findChildByName(container, 'badge_' + badge.position);
+      if (!badgeSlot) {
+        console.warn('[Plugin] Badge slot not found:', 'badge_' + badge.position);
+        continue;
+      }
       
-      const badge = params.badges.find(function(b: any) { return b.position === i; });
-      if (badge) {
-        badgeSlot.visible = true;
-        if (badgeSlot.type === 'TEXT') {
-          const textNode = badgeSlot as TextNode;
+      badgeSlot.visible = true;
+      console.log('[Plugin] Badge slot visible:', 'badge_' + badge.position, 'name:', badge.name);
+      
+      // 텍스트 레이어인 경우 텍스트 설정
+      if (badgeSlot.type === 'TEXT') {
+        const textNode = badgeSlot as TextNode;
+        const fonts = textNode.getRangeAllFontNames(0, textNode.characters.length);
+        for (const font of fonts) {
+          await figma.loadFontAsync(font);
+        }
+        textNode.characters = badge.name;
+      } else if ('children' in badgeSlot) {
+        // 뱃지 슬롯이 그룹인 경우, 내부의 텍스트 레이어 찾기
+        const textChild = findChildByName(badgeSlot as BaseNode & ChildrenMixin, 'text');
+        if (textChild && textChild.type === 'TEXT') {
+          const textNode = textChild as TextNode;
           const fonts = textNode.getRangeAllFontNames(0, textNode.characters.length);
           for (const font of fonts) {
             await figma.loadFontAsync(font);
           }
           textNode.characters = badge.name;
         }
-      } else {
-        badgeSlot.visible = false;
       }
     }
   }
@@ -231,6 +282,11 @@ async function handleDeleteFrames(params: any): Promise<void> {
       (node as SceneNode).remove();
     }
   }
+  
+  // 프레임 삭제 후 위치 추적 변수 초기화
+  lastClonedFrameX = 0;
+  lastClonedFrameWidth = 0;
+  console.log('[Plugin] Frames deleted, position tracking reset');
 }
 
 async function handleGetTemplateSpec(params: any): Promise<any> {
