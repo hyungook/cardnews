@@ -288,10 +288,15 @@ export class GeneratePipeline extends EventEmitter {
       await this.withRetry(() =>
         this.deps.orchestrator.setTextLayer(frameId, 'sub_text', subAction.text),
       );
-    } else {
-      console.log(`[Pipeline] 행 ${row.rowIndex} - 서브 텍스트 레이어 숨김 시도`);
+      // 컨테이너도 보이도록 설정
       await this.withRetry(() =>
-        this.deps.orchestrator.hideLayer(frameId, 'sub_text'),
+        this.deps.orchestrator.showLayer(frameId, 'sub_text_container'),
+      );
+    } else {
+      console.log(`[Pipeline] 행 ${row.rowIndex} - 서브 텍스트 컨테이너 숨김 시도`);
+      // 컨테이너 전체를 숨김
+      await this.withRetry(() =>
+        this.deps.orchestrator.hideLayer(frameId, 'sub_text_container'),
       );
     }
 
@@ -308,6 +313,7 @@ export class GeneratePipeline extends EventEmitter {
       await this.withRetry(() =>
         this.deps.orchestrator.setTextLayer(frameId, 'copyright', copyrightAction.text),
       );
+      // copyright는 직접 자식이므로 컨테이너 처리 불필요
     } else {
       console.log(`[Pipeline] 행 ${row.rowIndex} - 카피라이트 레이어 숨김 시도`);
       await this.withRetry(() =>
@@ -342,10 +348,10 @@ export class GeneratePipeline extends EventEmitter {
       throw new PipelineError('TEXT_OVERFLOW', `기본 문구 텍스트가 오버플로우 되었습니다${detailMsg}. 텍스트를 줄여주세요`);
     }
 
-    // m. Export image with quality adjustment
+    // m. Export image with quality adjustment (via plugin)
     this.updateProgress({ currentStep: '렌더링' });
     const exportResult = await this.withRetry(() =>
-      this.deps.exportManager.exportWithQualityAdjustment(frameId, row.movieTitle, existingFiles),
+      this.deps.exportManager.exportViaPluginWithQualityAdjustment(frameId, row.movieTitle, existingFiles),
     );
 
     // Track the new filename for subsequent dedup

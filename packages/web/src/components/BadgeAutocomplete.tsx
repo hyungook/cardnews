@@ -5,7 +5,7 @@ import styles from './BadgeAutocomplete.module.css';
 export interface BadgeAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
-  onCommit: () => void;
+  onCommit: (value?: string) => void;
 }
 
 export default function BadgeAutocomplete({
@@ -38,12 +38,11 @@ export default function BadgeAutocomplete({
       setShowModal(false);
       setSearchQuery('');
       setActiveIndex(-1);
-      // 선택 후 상태 업데이트를 기다린 후 커밋
-      console.log('[BadgeAutocomplete] 50ms 후 onCommit 호출 예약');
+      // 선택한 값을 직접 onCommit에 전달
+      console.log('[BadgeAutocomplete] onCommit 호출 (값 전달:', badge, ')');
       setTimeout(() => {
-        console.log('[BadgeAutocomplete] onCommit 호출');
-        onCommit();
-      }, 50);
+        onCommit(badge);
+      }, 10);
     },
     [onChange, onCommit, value],
   );

@@ -76,6 +76,60 @@ export class ExportManager {
       sizeWarning,
     };
   }
+
+  /**
+   * 플러그인을 통해 이미지를 내보내고 품질을 자동 조정하여 로컬 파일 시스템에 저장한다.
+   * REST API 대신 플러그인에서 직접 스크린샷을 생성하므로 빠르고 Rate Limit이 없다.
+   *
+   * 1. Figma 플러그인으로 PNG 내보내기 (빠름, Rate Limit 없음)
+   * 2. sharp로 JPG 변환 (80% → 75% → 70%)
+   * 3. 500KB 이하가 되면 해당 품질 사용
+   * 4. 70%에서도 초과 시 sizeWarning=true
+   * 5. generateFilename()으로 파일명 생성 (중복 처리)
+   * 6. 로컬 파일 시스템 결과물 폴더에 저장
+   */
+  async exportViaPluginWithQualityAdjustment(
+    frameId: string,
+    movieTitle: string,
+    existingFiles: string[],
+  ): Promise<ExportResult> {
+    // 1. 플러그인에서 PNG로 내보내기 (빠름, Rate Limit 없음)
+    const pngBuffer = await this.orchestrator.exportImageViaPlugin(frameId);
+
+    // 2. 품질 단계별 JPG 변환 시도
+    let jpgBuffer: Buffer = Buffer.alloc(0);
+    let finalQuality: typeof QUALITY_STEPS[number] = QUALITY_STEPS[0];
+    let sizeWarning = false;
+
+    for (const quality of QUALITY_STEPS) {
+      jpgBuffer = await convertToJpg(pngBuffer, quality);
+      finalQuality = quality;
+
+      if (jpgBuffer.length <= MAX_FILE_SIZE) {
+        break;
+      }
+    }
+
+    // 70%에서도 500KB 초과 시 경고 플래그
+    if (jpgBuffer.length > MAX_FILE_SIZE) {
+      sizeWarning = true;
+    }
+
+    // 3. 파일명 생성 (중복 처리)
+    const filename = generateFilename(movieTitle, existingFiles);
+
+    // 4. 로컬 파일 시스템에 저장 (날짜별 폴더)
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    await saveResult(filename, jpgBuffer, today);
+
+    return {
+      success: true,
+      filename,
+      quality: finalQuality,
+      fileSize: jpgBuffer.length,
+      sizeWarning,
+    };
+  }
 }
 
 /**

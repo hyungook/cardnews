@@ -122,6 +122,22 @@ async function handleHideLayer(params: any): Promise<void> {
   console.log('[Plugin] Layer hidden:', params.layerName);
 }
 
+async function handleShowLayer(params: any): Promise<void> {
+  const frame = figma.getNodeById(params.frameId);
+  if (!frame || !('children' in frame)) {
+    throw new Error('Frame not found: ' + params.frameId);
+  }
+  
+  const child = findChildByName(frame as BaseNode & ChildrenMixin, params.layerName);
+  if (!child) {
+    console.warn('[Plugin] Layer not found for showing:', params.layerName);
+    throw new Error('Layer not found: ' + params.layerName);
+  }
+  
+  child.visible = true;
+  console.log('[Plugin] Layer shown:', params.layerName);
+}
+
 async function handleReplaceImage(params: any): Promise<void> {
   const frame = figma.getNodeById(params.frameId);
   if (!frame || !('children' in frame)) {
@@ -289,6 +305,28 @@ async function handleDeleteFrames(params: any): Promise<void> {
   console.log('[Plugin] Frames deleted, position tracking reset');
 }
 
+async function handleExportImage(params: any): Promise<any> {
+  const node = figma.getNodeById(params.frameId);
+  if (!node) {
+    throw new Error('Frame not found: ' + params.frameId);
+  }
+  
+  console.log('[Plugin] Exporting image for frame:', params.frameId);
+  
+  // 플러그인에서 직접 PNG로 내보내기
+  const imageBytes = await (node as SceneNode).exportAsync({
+    format: 'PNG',
+    constraint: { type: 'SCALE', value: 1 }
+  });
+  
+  // Base64로 인코딩하여 반환
+  const imageBase64 = figma.base64Encode(imageBytes);
+  
+  console.log('[Plugin] Image exported, size:', imageBytes.length, 'bytes');
+  
+  return { imageBase64 };
+}
+
 async function handleGetTemplateSpec(params: any): Promise<any> {
   const node = figma.getNodeById(params.templateNodeId);
   if (!node || !('children' in node)) {
@@ -358,6 +396,8 @@ figma.ui.onmessage = async function(msg: any) {
       result = await handleSetText(params);
     } else if (command === 'hide-layer') {
       result = await handleHideLayer(params);
+    } else if (command === 'show-layer') {
+      result = await handleShowLayer(params);
     } else if (command === 'replace-image') {
       result = await handleReplaceImage(params);
     } else if (command === 'switch-badge-variant') {
@@ -366,6 +406,8 @@ figma.ui.onmessage = async function(msg: any) {
       result = await handleCheckOverflow(params);
     } else if (command === 'delete-frames') {
       result = await handleDeleteFrames(params);
+    } else if (command === 'export-image') {
+      result = await handleExportImage(params);
     } else if (command === 'get-template-spec') {
       result = await handleGetTemplateSpec(params);
     } else {

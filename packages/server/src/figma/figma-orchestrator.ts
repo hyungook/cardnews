@@ -137,6 +137,11 @@ export class FigmaOrchestrator {
     await this.bridge.sendCommand('hide-layer', { frameId, layerName });
   }
 
+  /** 레이어를 표시한다. */
+  async showLayer(frameId: string, layerName: string): Promise<void> {
+    await this.bridge.sendCommand('show-layer', { frameId, layerName });
+  }
+
   /** 이미지 레이어를 교체한다. imageData를 base64로 인코딩하여 전송한다. */
   async replaceImage(
     frameId: string,
@@ -179,6 +184,20 @@ export class FigmaOrchestrator {
   /** 복제 프레임들을 삭제한다. */
   async deleteFrames(frameIds: string[]): Promise<void> {
     await this.bridge.sendCommand('delete-frames', { frameIds });
+  }
+
+  /**
+   * 플러그인을 통해 이미지를 내보낸다.
+   * REST API 대신 플러그인에서 직접 스크린샷을 생성하여 반환한다.
+   * Rate Limit이 없고 속도가 빠르다.
+   */
+  async exportImageViaPlugin(frameId: string): Promise<Buffer> {
+    const result = (await this.bridge.sendCommand('export-image', {
+      frameId,
+    })) as { imageBase64: string };
+    
+    // Base64를 Buffer로 변환
+    return Buffer.from(result.imageBase64, 'base64');
   }
 
   /**

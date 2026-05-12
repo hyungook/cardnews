@@ -41,7 +41,7 @@ const IMAGE_FIELDS = new Set<string>(['backgroundFilenameOverride', 'logoFilenam
 
 export interface SpreadsheetTableProps {
   rows: CardNewsRow[];
-  onRefresh: () => void;
+  onRefresh: () => void | Promise<void>;
   onRowsSelected: (selectedRows: number[]) => void;
   selectedRows: number[];
   onPreviewRow?: (rowIndex: number) => void;
@@ -175,8 +175,11 @@ export default function SpreadsheetTable({
     [rows],
   );
 
-  const commitEdit = useCallback(async () => {
-    console.log('[SpreadsheetTable] commitEdit 호출됨', { editing, editValue });
+  const commitEdit = useCallback(async (valueOverride?: string) => {
+    // valueOverride가 있으면 사용, 없으면 editValue 사용
+    const finalValue = valueOverride !== undefined ? valueOverride : editValue;
+    
+    console.log('[SpreadsheetTable] commitEdit 호출됨', { editing, editValue, valueOverride, finalValue });
     
     if (!editing) {
       console.log('[SpreadsheetTable] editing이 null, 종료');
@@ -191,9 +194,9 @@ export default function SpreadsheetTable({
     }
 
     const oldValue = String(row[editing.field] || '');
-    console.log('[SpreadsheetTable] 값 비교', { oldValue, editValue, field: editing.field });
+    console.log('[SpreadsheetTable] 값 비교', { oldValue, finalValue, field: editing.field });
     
-    if (editValue === oldValue) {
+    if (finalValue === oldValue) {
       console.log('[SpreadsheetTable] 값이 동일함, 종료');
       setEditing(null);
       return;
@@ -206,29 +209,30 @@ export default function SpreadsheetTable({
       return;
     }
 
-    console.log('[SpreadsheetTable] 서버에 저장 시도', { row: editing.rowIndex, col, value: editValue });
+    console.log('[SpreadsheetTable] 서버에 저장 시도', { row: editing.rowIndex, col, value: finalValue });
+
+    // 편집 모드 먼저 종료
+    setEditing(null);
 
     try {
       await apiFetch('/sheets/cell', {
         method: 'PUT',
-        body: JSON.stringify({ row: editing.rowIndex, col, value: editValue }),
+        body: JSON.stringify({ row: editing.rowIndex, col, value: finalValue }),
       });
       console.log('[SpreadsheetTable] 저장 성공');
       
-      // Update local state optimistically — parent will get fresh data on refresh
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (row as any)[editing.field] = editValue;
-      
-      // 뱃지 필드 업데이트 후 화면 갱신
-      if (BADGE_FIELDS.has(editing.field)) {
-        console.log('[SpreadsheetTable] 뱃지 필드 업데이트, 새로고침 호출');
-        onRefresh();
-      }
+      // 서버에서 최신 데이터 가져오기
+      console.log('[SpreadsheetTable] 새로고침 호출');
+      await onRefresh();
+      console.log('[SpreadsheetTable] 새로고침 완료');
     } catch (error) {
       console.error('[SpreadsheetTable] 저장 실패', error);
     }
-    setEditing(null);
   }, [editing, editValue, rows, onRefresh]);
+
+  const handleBlur = useCallback(() => {
+    commitEdit();
+  }, [commitEdit]);
 
   const handleImageSelect = useCallback(async (filename: string) => {
     setEditValue(filename);
@@ -464,7 +468,7 @@ export default function SpreadsheetTable({
                               className={styles.cellTextarea}
                               value={editValue}
                               onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={commitEdit}
+                              onBlur={handleBlur}
                               onKeyDown={(e) => handleKeyDown(e, true)}
                             />
                           ) : (
@@ -474,7 +478,7 @@ export default function SpreadsheetTable({
                               type="text"
                               value={editValue}
                               onChange={(e) => setEditValue(e.target.value)}
-                              onBlur={commitEdit}
+                              onBlur={handleBlur}
                               onKeyDown={(e) => handleKeyDown(e, false)}
                             />
                           )}

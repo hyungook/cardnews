@@ -414,19 +414,40 @@ export default function DashboardPage() {
                       e.currentTarget.style.transform = 'scale(1)';
                       e.currentTarget.style.boxShadow = 'none';
                     }}
+                    onClick={() => {
+                      if (r.movieTitle) {
+                        window.open(`/api/download/${r.movieTitle}`, '_blank');
+                      }
+                    }}
                   >
                     <div style={{
                       width: '100%',
                       aspectRatio: '808/454',
-                      background: 'linear-gradient(135deg, #1a1a1a 0%, #3a3a3a 100%)',
+                      background: '#0a0a0a',
                       borderRadius: 6,
                       marginBottom: 10,
+                      overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: 32,
                     }}>
-                      🎬
+                      <img
+                        src={`/api/download/${r.movieTitle}`}
+                        alt={r.movieTitle}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                        }}
+                        onError={(e) => {
+                          // 이미지 로드 실패 시 아이콘 표시
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML = '<div style="font-size: 32px; opacity: 0.5;">🎬</div>';
+                          }
+                        }}
+                      />
                     </div>
                     <div style={{ fontSize: 9, fontWeight: 600, marginBottom: 6, color: '#fff' }}>
                       {r.movieTitle}
