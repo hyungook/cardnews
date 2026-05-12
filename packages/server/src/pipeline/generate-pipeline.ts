@@ -277,11 +277,19 @@ export class GeneratePipeline extends EventEmitter {
 
     // i. Handle sub text
     const subAction = determineLayerAction(row.subText);
+    console.log(`[Pipeline] 행 ${row.rowIndex} - 서브 텍스트 처리:`, {
+      value: row.subText,
+      valueLength: row.subText.length,
+      isEmpty: row.subText === '',
+      action: subAction.action
+    });
+    
     if (subAction.action === 'setText') {
       await this.withRetry(() =>
         this.deps.orchestrator.setTextLayer(frameId, 'sub_text', subAction.text),
       );
     } else {
+      console.log(`[Pipeline] 행 ${row.rowIndex} - 서브 텍스트 레이어 숨김 시도`);
       await this.withRetry(() =>
         this.deps.orchestrator.hideLayer(frameId, 'sub_text'),
       );
@@ -289,11 +297,19 @@ export class GeneratePipeline extends EventEmitter {
 
     // j. Handle copyright
     const copyrightAction = determineLayerAction(row.copyright);
+    console.log(`[Pipeline] 행 ${row.rowIndex} - 카피라이트 처리:`, {
+      value: row.copyright,
+      valueLength: row.copyright.length,
+      isEmpty: row.copyright === '',
+      action: copyrightAction.action
+    });
+    
     if (copyrightAction.action === 'setText') {
       await this.withRetry(() =>
         this.deps.orchestrator.setTextLayer(frameId, 'copyright', copyrightAction.text),
       );
     } else {
+      console.log(`[Pipeline] 행 ${row.rowIndex} - 카피라이트 레이어 숨김 시도`);
       await this.withRetry(() =>
         this.deps.orchestrator.hideLayer(frameId, 'copyright'),
       );

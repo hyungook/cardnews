@@ -7,16 +7,21 @@ export type LayerAction =
 
 /**
  * 필드 값에 따라 레이어 액션을 결정한다.
- * - 빈 문자열이면 해당 레이어를 숨김(hide) 처리한다.
+ * - 빈 문자열이거나 공백만 있으면 해당 레이어를 숨김(hide) 처리한다.
  * - 비어있지 않으면 텍스트 설정(setText) 명령을 반환한다.
  *
  * @param value - 필드 값 (subText 또는 copyright)
  * @returns LayerAction
  */
 export function determineLayerAction(value: string): LayerAction {
-  if (value === '') {
+  // 공백 문자를 제거한 후 빈 문자열인지 확인
+  const trimmedValue = value.trim();
+  
+  if (trimmedValue === '') {
     return { action: 'hide' };
   }
+  
+  // 원본 값을 사용 (공백 포함)
   return { action: 'setText', text: value };
 }
 
