@@ -68,7 +68,84 @@ export default function SpreadsheetTable({
   const [refreshing, setRefreshing] = useState(false);
   const [imagePickerOpen, setImagePickerOpen] = useState(false);
   const [imagePickerField, setImagePickerField] = useState<'backgroundFilenameOverride' | 'logoFilenameOverride' | null>(null);
+  const [autoMatching, setAutoMatching] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>(null);
+
+  // 자동 매칭 함수: 영화 제목과 파일명이 일치하는 파일 찾기
+  const findMatchingFile = useCallback((movieTitle: string, folder: string): string | null => {
+    if (!movieTitle || !movieTitle.trim()) return null;
+    
+    const title = movieTitle.trim();
+    
+    // 정확히 일치하는 파일 찾기
+    const exactMatch = uploadedFiles.find(
+      (file) => file.folder === folder && file.name.includes(title)
+    );
+    
+    if (exactMatch) {
+      return exactMatch.name;
+    }
+    
+    return null;
+  }, [uploadedFiles]);
+
+  // 자동 매칭 실행 함수
+  const handleAutoMatch = useCallback(async () => {
+    if (rows.length === 0 || uploadedFiles.length === 0) {
+      alert('데이터나 업로드된 파일이 없습니다.');
+      return;
+    }
+    
+    setAutoMatching(true);
+    
+    try {
+      const updates: Array<{ row: number; col: number; value: string }> = [];
+      let matchCount = 0;
+      
+      rows.forEach((row) => {
+        // 배경 이미지 자동 매칭 (비어있을 때만)
+        if (!row.backgroundFilenameOverride || row.backgroundFilenameOverride.trim() === '') {
+          const matchedBg = findMatchingFile(row.movieTitle, '배경이미지');
+          if (matchedBg) {
+            updates.push({ row: row.rowIndex, col: 1, value: matchedBg });
+            matchCount++;
+          }
+        }
+        
+        // 로고 자동 매칭 (비어있을 때만)
+        if (!row.logoFilenameOverride || row.logoFilenameOverride.trim() === '') {
+          const matchedLogo = findMatchingFile(row.movieTitle, '로고');
+          if (matchedLogo) {
+            updates.push({ row: row.rowIndex, col: 2, value: matchedLogo });
+            matchCount++;
+          }
+        }
+      });
+      
+      if (updates.length === 0) {
+        alert('자동 매칭할 이미지가 없습니다.\n(이미 연결된 이미지는 건너뜁니다)');
+        return;
+      }
+      
+      // 변경사항 일괄 업데이트
+      await Promise.all(
+        updates.map((update) =>
+          apiFetch('/sheets/cell', {
+            method: 'PUT',
+            body: JSON.stringify(update),
+          })
+        )
+      );
+      
+      alert(`${matchCount}개의 이미지가 자동으로 연결되었습니다.`);
+      onRefresh();
+    } catch (error) {
+      alert('자동 매칭 중 오류가 발생했습니다.');
+      console.error('Auto-match error:', error);
+    } finally {
+      setAutoMatching(false);
+    }
+  }, [rows, uploadedFiles, findMatchingFile, onRefresh]);
 
   // Focus the input/textarea when entering edit mode
   useEffect(() => {
@@ -221,6 +298,14 @@ export default function SpreadsheetTable({
           disabled={refreshing}
         >
           {refreshing ? '⏳' : '🔄'} 새로고침
+        </button>
+        <button
+          className={styles.refreshBtn}
+          onClick={handleAutoMatch}
+          disabled={autoMatching || uploadedFiles.length === 0}
+          title="영화 제목과 파일명이 일치하는 이미지를 자동으로 연결합니다"
+        >
+          {autoMatching ? '⏳' : '🔗'} 이미지 자동 매칭
         </button>
         {rows.length > 0 && (
           <span className={styles.info}>

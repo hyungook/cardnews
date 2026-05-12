@@ -141,7 +141,11 @@ export default function BadgeAutocomplete({
             <div
               key={badge}
               className={`${styles.dropdownItem} ${idx === activeIndex ? styles.dropdownItemActive : ''}`}
-              onClick={() => selectBadge(badge)}
+              onMouseDown={(e) => {
+                // preventDefault로 input blur 방지
+                e.preventDefault();
+                selectBadge(badge);
+              }}
               onMouseEnter={() => setActiveIndex(idx)}
             >
               <span className={styles.badgeIcon}>🏷️</span>
