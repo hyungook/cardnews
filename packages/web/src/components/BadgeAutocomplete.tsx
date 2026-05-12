@@ -33,14 +33,19 @@ export default function BadgeAutocomplete({
 
   const selectBadge = useCallback(
     (badge: string) => {
+      console.log('[BadgeAutocomplete] selectBadge 호출됨', { badge, currentValue: value });
       onChange(badge);
       setShowModal(false);
       setSearchQuery('');
       setActiveIndex(-1);
       // 선택 후 상태 업데이트를 기다린 후 커밋
-      setTimeout(() => onCommit(), 50);
+      console.log('[BadgeAutocomplete] 50ms 후 onCommit 호출 예약');
+      setTimeout(() => {
+        console.log('[BadgeAutocomplete] onCommit 호출');
+        onCommit();
+      }, 50);
     },
-    [onChange, onCommit],
+    [onChange, onCommit, value],
   );
 
   const handleOpenModal = useCallback(() => {

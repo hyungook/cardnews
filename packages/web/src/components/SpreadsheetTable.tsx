@@ -176,40 +176,56 @@ export default function SpreadsheetTable({
   );
 
   const commitEdit = useCallback(async () => {
-    if (!editing) return;
+    console.log('[SpreadsheetTable] commitEdit 호출됨', { editing, editValue });
+    
+    if (!editing) {
+      console.log('[SpreadsheetTable] editing이 null, 종료');
+      return;
+    }
+    
     const row = rows.find((r) => r.rowIndex === editing.rowIndex);
     if (!row) {
+      console.log('[SpreadsheetTable] row를 찾을 수 없음, 종료');
       setEditing(null);
       return;
     }
 
     const oldValue = String(row[editing.field] || '');
+    console.log('[SpreadsheetTable] 값 비교', { oldValue, editValue, field: editing.field });
+    
     if (editValue === oldValue) {
+      console.log('[SpreadsheetTable] 값이 동일함, 종료');
       setEditing(null);
       return;
     }
 
     const col = FIELD_TO_COL[editing.field];
     if (col === undefined) {
+      console.log('[SpreadsheetTable] 컬럼을 찾을 수 없음, 종료');
       setEditing(null);
       return;
     }
+
+    console.log('[SpreadsheetTable] 서버에 저장 시도', { row: editing.rowIndex, col, value: editValue });
 
     try {
       await apiFetch('/sheets/cell', {
         method: 'PUT',
         body: JSON.stringify({ row: editing.rowIndex, col, value: editValue }),
       });
+      console.log('[SpreadsheetTable] 저장 성공');
+      
       // Update local state optimistically — parent will get fresh data on refresh
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (row as any)[editing.field] = editValue;
       
       // 뱃지 필드 업데이트 후 화면 갱신
       if (BADGE_FIELDS.has(editing.field)) {
+        console.log('[SpreadsheetTable] 뱃지 필드 업데이트, 새로고침 호출');
         onRefresh();
       }
-    } catch {
-      // Silently fail — user can retry or refresh
+    } catch (error) {
+      console.error('[SpreadsheetTable] 저장 실패', error);
     }
     setEditing(null);
   }, [editing, editValue, rows, onRefresh]);
