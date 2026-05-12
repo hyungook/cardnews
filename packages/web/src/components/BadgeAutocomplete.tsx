@@ -13,14 +13,15 @@ export default function BadgeAutocomplete({
   onChange,
   onCommit,
 }: BadgeAutocompleteProps) {
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(-1);
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const filtered = value.trim()
+  const filtered = searchQuery.trim()
     ? VALID_BADGES.filter((b) =>
-        b.toLowerCase().includes(value.trim().toLowerCase()),
+        b.toLowerCase().includes(searchQuery.trim().toLowerCase()),
       )
     : [...VALID_BADGES];
 
@@ -33,7 +34,8 @@ export default function BadgeAutocomplete({
   const selectBadge = useCallback(
     (badge: string) => {
       onChange(badge);
-      setShowDropdown(false);
+      setShowModal(false);
+      setSearchQuery('');
       setActiveIndex(-1);
       // 선택 후 즉시 커밋
       setTimeout(() => onCommit(), 0);
@@ -41,128 +43,150 @@ export default function BadgeAutocomplete({
     [onChange, onCommit],
   );
 
+  const handleOpenModal = useCallback(() => {
+    setShowModal(true);
+    setSearchQuery('');
+    setActiveIndex(-1);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setShowModal(false);
+    setSearchQuery('');
+    setActiveIndex(-1);
+  }, []);
+
+  const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleCloseModal();
+    }
+  }, [handleCloseModal]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (!showDropdown) {
-        if (e.key === 'ArrowDown') {
-          setShowDropdown(true);
-          setActiveIndex(0);
+      if (e.key === 'Escape') {
+        handleCloseModal();
+      } else if (e.key === 'Enter') {
+        if (activeIndex >= 0 && activeIndex < filtered.length) {
           e.preventDefault();
-          return;
+          selectBadge(filtered[activeIndex]);
         }
-      }
-
-      if (showDropdown && filtered.length > 0) {
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          setActiveIndex((prev) =>
-            prev < filtered.length - 1 ? prev + 1 : 0,
-          );
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          setActiveIndex((prev) =>
-            prev > 0 ? prev - 1 : filtered.length - 1,
-          );
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          if (activeIndex >= 0 && activeIndex < filtered.length) {
-            selectBadge(filtered[activeIndex]);
-          } else {
-            setShowDropdown(false);
-            onCommit();
-          }
-        } else if (e.key === 'Escape') {
-          setShowDropdown(false);
-          setActiveIndex(-1);
-        } else if (e.key === 'Tab') {
-          setShowDropdown(false);
-          onCommit();
-        }
-      } else if (e.key === 'Enter' || e.key === 'Tab') {
-        setShowDropdown(false);
-        onCommit();
-      } else if (e.key === 'Escape') {
-        setShowDropdown(false);
-        onCommit();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveIndex((prev) =>
+          prev < filtered.length - 1 ? prev + 1 : 0,
+        );
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveIndex((prev) =>
+          prev > 0 ? prev - 1 : filtered.length - 1,
+        );
       }
     },
-    [showDropdown, filtered, activeIndex, selectBadge, onCommit],
+    [filtered, activeIndex, selectBadge, handleCloseModal],
   );
 
-  // Close dropdown on outside click
+  // Focus search input when modal opens
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
+    if (showModal && searchInputRef.current) {
+      searchInputRef.current.focus();
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Focus input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  }, [showModal]);
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
-      <input
-        ref={inputRef}
-        className={`${styles.input} ${!isValid ? styles.inputInvalid : ''}`}
-        type="text"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value);
-          setShowDropdown(true);
-          setActiveIndex(-1);
-        }}
-        onFocus={() => setShowDropdown(true)}
-        onKeyDown={handleKeyDown}
-        placeholder="뱃지 선택 또는 입력..."
-        autoComplete="off"
-      />
-      {!isValid && value.trim() !== '' && (
-        <div className={styles.errorHint}>
-          ⚠️ 유효하지 않은 뱃지 이름입니다
-        </div>
-      )}
-      {showDropdown && filtered.length > 0 && (
-        <div className={styles.dropdown}>
-          <div className={styles.dropdownHeader}>
-            {filtered.length === VALID_BADGES.length
-              ? '전체 뱃지 목록'
-              : `검색 결과 ${filtered.length}개`}
+    <>
+      <div className={styles.wrapper}>
+        <input
+          ref={inputRef}
+          className={`${styles.input} ${!isValid ? styles.inputInvalid : ''}`}
+          type="text"
+          value={value}
+          onClick={handleOpenModal}
+          readOnly
+          placeholder="뱃지 선택..."
+          autoComplete="off"
+        />
+        {!isValid && value.trim() !== '' && (
+          <div className={styles.errorHint}>
+            ⚠️ 유효하지 않은 뱃지 이름입니다
           </div>
-          <div className={styles.badgeGrid}>
-            {filtered.map((badge, idx) => (
-              <div
-                key={badge}
-                className={`${styles.badgeGridItem} ${idx === activeIndex ? styles.badgeGridItemActive : ''}`}
-                onMouseDown={(e) => {
-                  // preventDefault로 input blur 방지
-                  e.preventDefault();
-                  selectBadge(badge);
+        )}
+      </div>
+
+      {showModal && (
+        <div className={styles.backdrop} onClick={handleBackdropClick}>
+          <div className={styles.modal}>
+            <div className={styles.header}>
+              <h2 className={styles.title}>🏷️ 뱃지 선택</h2>
+              <button className={styles.closeBtn} onClick={handleCloseModal}>
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.searchSection}>
+              <input
+                ref={searchInputRef}
+                className={styles.searchInput}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setActiveIndex(-1);
                 }}
-                onMouseEnter={() => setActiveIndex(idx)}
-              >
-                <span className={styles.badgeIcon}>🏷️</span>
-                <span className={styles.badgeName}>{badge}</span>
-              </div>
-            ))}
+                onKeyDown={handleKeyDown}
+                placeholder="뱃지 검색..."
+                autoComplete="off"
+              />
+            </div>
+
+            <div className={styles.content}>
+              {filtered.length === 0 ? (
+                <div className={styles.empty}>
+                  <div className={styles.emptyIcon}>🔍</div>
+                  <div className={styles.emptyText}>검색 결과가 없습니다</div>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.resultHeader}>
+                    {filtered.length === VALID_BADGES.length
+                      ? `전체 뱃지 ${VALID_BADGES.length}개`
+                      : `검색 결과 ${filtered.length}개`}
+                  </div>
+                  <div className={styles.badgeGrid}>
+                    {/* 선택 안 함 옵션 */}
+                    <div
+                      className={`${styles.badgeCard} ${value === '' ? styles.selected : ''}`}
+                      onClick={() => selectBadge('')}
+                      onMouseEnter={() => setActiveIndex(-1)}
+                    >
+                      <div className={styles.badgeIcon}>🚫</div>
+                      <div className={styles.badgeName}>선택 안 함</div>
+                    </div>
+
+                    {/* 뱃지 목록 */}
+                    {filtered.map((badge, idx) => (
+                      <div
+                        key={badge}
+                        className={`${styles.badgeCard} ${value === badge ? styles.selected : ''} ${idx === activeIndex ? styles.active : ''}`}
+                        onClick={() => selectBadge(badge)}
+                        onMouseEnter={() => setActiveIndex(idx)}
+                      >
+                        <div className={styles.badgeIcon}>🏷️</div>
+                        <div className={styles.badgeName}>{badge}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className={styles.footer}>
+              <button className={styles.cancelBtn} onClick={handleCloseModal}>
+                취소
+              </button>
+            </div>
           </div>
         </div>
       )}
-      {showDropdown && filtered.length === 0 && value.trim() !== '' && (
-        <div className={styles.dropdown}>
-          <div className={styles.dropdownEmpty}>
-            검색 결과가 없습니다
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }
