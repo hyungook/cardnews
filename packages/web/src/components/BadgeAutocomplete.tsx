@@ -137,21 +137,23 @@ export default function BadgeAutocomplete({
               ? '전체 뱃지 목록'
               : `검색 결과 ${filtered.length}개`}
           </div>
-          {filtered.map((badge, idx) => (
-            <div
-              key={badge}
-              className={`${styles.dropdownItem} ${idx === activeIndex ? styles.dropdownItemActive : ''}`}
-              onMouseDown={(e) => {
-                // preventDefault로 input blur 방지
-                e.preventDefault();
-                selectBadge(badge);
-              }}
-              onMouseEnter={() => setActiveIndex(idx)}
-            >
-              <span className={styles.badgeIcon}>🏷️</span>
-              <span className={styles.badgeName}>{badge}</span>
-            </div>
-          ))}
+          <div className={styles.badgeGrid}>
+            {filtered.map((badge, idx) => (
+              <div
+                key={badge}
+                className={`${styles.badgeGridItem} ${idx === activeIndex ? styles.badgeGridItemActive : ''}`}
+                onMouseDown={(e) => {
+                  // preventDefault로 input blur 방지
+                  e.preventDefault();
+                  selectBadge(badge);
+                }}
+                onMouseEnter={() => setActiveIndex(idx)}
+              >
+                <span className={styles.badgeIcon}>🏷️</span>
+                <span className={styles.badgeName}>{badge}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
       {showDropdown && filtered.length === 0 && value.trim() !== '' && (

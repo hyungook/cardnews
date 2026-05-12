@@ -78,6 +78,22 @@
   overflow: hidden;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
+}
+
+.card::after {
+  content: '더블클릭으로 선택';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #94a3b8;
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
 }
 
 .card:hover {
@@ -86,9 +102,20 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
+.card:hover::after {
+  opacity: 1;
+}
+
 .card.selected {
   border-color: #e50914;
   box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.3);
+}
+
+.card.selected::after {
+  content: '✓ 선택됨';
+  opacity: 1;
+  background: rgba(229, 9, 20, 0.9);
+  color: #fff;
 }
 
 .imagePreview {

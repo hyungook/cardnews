@@ -33,6 +33,11 @@ export default function ImagePickerModal({
     onClose();
   };
 
+  const handleDoubleClick = (filename: string) => {
+    onSelect(filename);
+    onClose();
+  };
+
   const handleBackdropClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       onClose();
@@ -68,6 +73,7 @@ export default function ImagePickerModal({
               <div
                 className={`${styles.card} ${selectedFile === '' ? styles.selected : ''}`}
                 onClick={() => setSelectedFile('')}
+                onDoubleClick={() => handleDoubleClick('')}
               >
                 <div className={styles.noImagePreview}>
                   <div className={styles.noImageIcon}>🚫</div>
@@ -84,6 +90,7 @@ export default function ImagePickerModal({
                   key={file.name}
                   className={`${styles.card} ${selectedFile === file.name ? styles.selected : ''}`}
                   onClick={() => setSelectedFile(file.name)}
+                  onDoubleClick={() => handleDoubleClick(file.name)}
                 >
                   <div className={styles.imagePreview}>
                     <img
